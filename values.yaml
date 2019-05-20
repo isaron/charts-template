@@ -1,0 +1,112 @@
+# Default values for Gradle projects.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# buildID: master
+# buildID: xxxxxxx-testing
+# nameOverride:
+prodReady: false
+
+replicaCount: 1
+RollingUpdate: {}
+  # maxSurge: 1
+  # maxUnavailable: 25%
+nodeSelector:
+  beta.kubernetes.io/os: linux
+  
+image:
+  repository: containers.ssii.com/com.ssii.rdp/demo-gradle
+  tag: 0.0.1-SNAPSHOT
+  pullPolicy: Always
+  pullSecret: nexus-docker
+
+HealthProbes: 
+  enabled: true
+  HealthProbesLivenessTimeout: 90
+  HealthProbesReadinessTimeout: 60
+  HealthProbeReadinessPeriodSeconds: 10
+  HealthProbeLivenessFailureThreshold: 12
+
+service:
+  name: demo-gradle
+  labels: {}
+  annotations: {}
+    # external-dns.alpha.kubernetes.io/hostname: demo-gradle.rdp.ssii.com
+  JavaOpts: "-Xms512m -Xmx512m -Xdebug -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+  UriPrefix: /
+  type: ClusterIP
+  externalTrafficPolicy: Local
+  # clusterIP: None
+  nodePort: 
+  ports:
+    name: http-demo
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1024Mi
+  requests:
+    cpu: 200m
+    memory: 512Mi
+
+ingress:
+  enabled: true
+  # For Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'
+  apiVersion: extensions/v1beta1
+  labels: {}
+  annotations: 
+    kubernetes.io/ingress.class: nginx
+    certmanager.k8s.io/cluster-issuer: ca-issuer
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # kubernetes.io/tls-acme: "true"
+  # baseDomain: rdp.ssii.com
+  hostName: demo-gradle.rdp.ssii.com
+  tls:
+  - secretName: demo-gradle-tls
+    hosts:
+      - demo-gradle.rdp.ssii.com
+
+metrics:
+  prometheus:
+    enabled: true
+    
+persistence:
+  enabled: false
+  ## A manually managed Persistent Volume and Claim
+  ## Requires Persistence.Enabled: true
+  ## If defined, PVC must be created manually before volume will be bound
+  # ExistingClaim:
+  ## jenkins data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # StorageClass: "-"
+  Annotations: {}
+  AccessMode: ReadWriteOnce
+  Size: 1Gi
+  volumes:
+    # - name: nothing
+    #   emptyDir: {}
+  mounts:
+    # - mountPath: /var/nothing
+    #   name: nothing
+    #   readOnly: true
+
+rbac:
+  ## Specifies whether RBAC resources should be created
+  create: true
+  ## RBAC api version (v1, v1beta1, or v1alpha1)
+  apiVersion: v1
+
+serviceAccount:
+  ## Specifies whether a ServiceAccount should be created
+  create: true
+  ## The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the fullname template
+  name: demo-gradle-sa

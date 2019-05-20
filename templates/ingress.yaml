@@ -1,0 +1,31 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "demo-gradle.fullname" . }}
+{{- $httpPort := .Values.service.ports.port }}
+apiVersion: {{ .Values.ingress.apiVersion }}
+kind: Ingress
+metadata:
+  name: {{ template "demo-gradle.fullname" . }}
+  labels:
+    # chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+{{- if .Values.ingress.labels }}
+{{ toYaml .Values.ingress.labels | indent 4 }}
+{{- end }}
+{{ include "demo-gradle.labels.standard" . | indent 4 }}
+{{- if .Values.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+{{- end }}
+spec:
+  rules:
+  - host: {{ .Values.ingress.hostName }}
+    http:
+      paths:
+      - path: {{ default "/" .Values.service.UriPrefix | quote }}
+        backend:
+          serviceName: {{ $fullName }}
+          servicePort: {{ $httpPort }}
+{{- if .Values.ingress.tls }}
+  tls:
+{{ toYaml .Values.ingress.tls | indent 2 }}
+{{- end -}}
+{{- end -}}

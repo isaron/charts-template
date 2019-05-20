@@ -1,0 +1,25 @@
+{{- if and .Values.persistence.enabled (not .Values.persistence.ExistingClaim) -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+{{- if .Values.persistence.Annotations }}
+  annotations:
+{{ toYaml .Values.persistence.Annotations | indent 4 }}
+{{- end }}
+  name: {{ include "demo-gradle.fullname" . }}
+  labels:
+{{ include "demo-gradle.labels.standard" . | indent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.AccessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.Size | quote }}
+{{- if .Values.persistence.StorageClass }}
+{{- if (eq "-" .Values.persistence.StorageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.persistence.StorageClass }}"
+{{- end }}
+{{- end }}
+{{- end }}
